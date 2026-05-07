@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+  <meta charset="UTF-8">
+
+  <title>Monitoramento</title>
+
+  <style>
+
+    body {
+      font-family: Arial;
+      margin: 40px;
+    }
+
+    h1 {
+      color: #333;
+    }
+
+    .card {
+      padding: 20px;
+      border: 1px solid #ccc;
+      border-radius: 10px;
+      width: 300px;
+      margin-bottom: 20px;
+    }
+
+    #peso {
+      font-size: 40px;
+      font-weight: bold;
+      color: green;
+    }
+
+    ul {
+      padding: 0;
+    }
+
+    li {
+      list-style: none;
+      padding: 10px;
+      border-bottom: 1px solid #ddd;
+    }
+
+  </style>
+
+</head>
+
+<body>
+
+  <h1>Monitoramento em Tempo Real</h1>
+  <h2 id="status">
+  🔴 OFFLINE
+  </h2>
+
+  <div class="card">
+
+    <p>Peso Atual:</p>
+
+    <div id="peso">
+      Aguardando...
+    </div>
+
+  </div>
+
+  <h2>Últimas Pesagens</h2>
+
+  <ul id="historico"></ul>
+  
+  <canvas id="grafico"></canvas>
+  
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+  <script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
+
+  <script>
+
+    const socket = io('http://localhost:3000');
+
+    const historico = document.getElementById('historico');
+    const status = document.getElementById('status');
+
+    let timeoutOffline;
+    const ctx = document.getElementById('grafico');
+
+const grafico = new Chart(ctx, {
+
+  type: 'line',
+
+  data: {
+    labels: [],
+    datasets: [{
+      label: 'Peso',
+      data: [],
+    }]
+  },
+
+});
+
+    async function carregarHistorico() {
+
+  const resposta =
+    await fetch('http://localhost:3000/balanca');
+
+  const dados = await resposta.json();
+
+  dados.forEach((item) => {
+
+    const li = document.createElement('li');
+
+    li.innerText =
+      `${item.peso} kg - ${item.status}`;
+
+    historico.appendChild(li);
+
+  });
+
+}
+
+carregarHistorico();
+
+    socket.on('connect', () => {
+      console.log('Conectado');
+    });
+
+    socket.on('nova-pesagem', (dados) => {
+
+      status.innerText = '🟢 ONLINE';
+
+      clearTimeout(timeoutOffline);
+
+    timeoutOffline = setTimeout(() => {
+
+    status.innerText = '🔴 OFFLINE';
+
+}, 10000);
+
+      document.getElementById('peso').innerText =
+        `${dados.peso} kg`;
+
+      const item = document.createElement('li');
+
+      item.innerText =
+        `${dados.peso} kg - ${dados.status}`;
+
+      historico.prepend(item);
+     grafico.data.labels.push(new Date().toLocaleTimeString());
+
+grafico.data.datasets[0].data.push(dados.peso);
+
+grafico.update();
+    });
+
+  </script>
+
+</body>
+
+</html>
