@@ -1,33 +1,17 @@
 import { NestFactory } from '@nestjs/core';
-import { ValidationPipe } from '@nestjs/common';
 import { AppModule } from './app.module';
-
-import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 
 async function bootstrap() {
 
   const app = await NestFactory.create(AppModule);
 
-  app.useGlobalPipes(
-    new ValidationPipe({
-      whitelist: true,
-      forbidNonWhitelisted: true,
-      transform: true,
-    }),
-  );
+  app.enableCors();
 
-  const config = new DocumentBuilder()
-    .setTitle('API Monitoramento')
-    .setDescription('Sistema de monitoramento de balança')
-    .setVersion('1.0')
-    .build();
+  const port = process.env.PORT || 3000;
 
-  const documentFactory = () => SwaggerModule.createDocument(app, config);
+  await app.listen(port, '0.0.0.0');
 
-  SwaggerModule.setup('api', app, documentFactory);
-
-  await app.listen(process.env.PORT || 3000);
-
+  console.log(`Servidor online na porta ${port}`);
 }
 
 bootstrap();
