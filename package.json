@@ -5,7 +5,8 @@
   "author": "",
   "private": true,
   "license": "UNLICENSED",
- "scripts": {
+  
+  "scripts": {
   "build": "prisma generate && nest build && ls -R dist",
   "start": "node dist/src/main.js",
   "start:dev": "nest start --watch",
